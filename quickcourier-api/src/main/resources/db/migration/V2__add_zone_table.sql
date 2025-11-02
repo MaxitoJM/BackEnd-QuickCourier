@@ -1,0 +1,5 @@
+CREATE TABLE zone (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    multiplier DECIMAL(5,2) NOT NULL
+);

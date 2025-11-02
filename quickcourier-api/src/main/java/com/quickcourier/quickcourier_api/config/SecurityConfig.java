@@ -9,15 +9,12 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf.disable()) // desactiva protección CSRF
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/public/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll() // permite TODO
             );
-            // Si más adelante se usa JWT, descomenta esta línea:
-            // .oauth2ResourceServer(oauth2 -> oauth2.jwt());
 
         return http.build();
     }
