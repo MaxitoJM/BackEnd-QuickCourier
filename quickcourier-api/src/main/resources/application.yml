@@ -22,3 +22,9 @@ logging:
     root: INFO
     org.springframework.web: DEBUG
     org.springframework.security: INFO
+
+security:
+  jwt:
+    secret: "cambia-esta-clave-muy-larga-y-segura-al-menos-32bytes........"
+    expiration: 86400000 # 24h en ms
+
