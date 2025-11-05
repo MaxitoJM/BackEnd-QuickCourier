@@ -1,5 +1,6 @@
 package com.quickcourier.quickcourier_api.service.impl;
 
+import com.quickcourier.quickcourier_api.domain.dto.RegisterRequest;
 import com.quickcourier.quickcourier_api.domain.model.User;
 import com.quickcourier.quickcourier_api.repository.UserRepository;
 import com.quickcourier.quickcourier_api.service.UserService;
@@ -23,29 +24,31 @@ public class UserServiceImpl implements UserService {
 
     @Transactional
     @Override
-    public User register(User userPlain) {
-        if (userPlain.getEmail() == null || userPlain.getEmail().isBlank()) {
+    public User register(RegisterRequest request) {
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
             throw new IllegalArgumentException("El email es obligatorio");
         }
-        if (userPlain.getPasswordHash() == null || userPlain.getPasswordHash().isBlank()) {
+        if (request.getPassword() == null || request.getPassword().isBlank()) {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
         // Verificar si ya existe
-        if (userRepository.findByEmail(userPlain.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Ya existe un usuario con ese email");
         }
 
+        User user = new User();
+        user.setEmail(request.getEmail());
+
         // Encriptar la contraseña
-        String hashed = passwordEncoder.encode(userPlain.getPasswordHash());
-        userPlain.setPasswordHash(hashed);
+        String hashed = passwordEncoder.encode(request.getPassword());
+        user.setPasswordHash(hashed);
 
         // Rol por defecto
-        if (userPlain.getRole() == null || userPlain.getRole().isBlank()) {
-            userPlain.setRole("USER");
-        }
+        String role = request.getRole();
+        user.setRole((role == null || role.isBlank()) ? "USER" : role);
 
-        return userRepository.save(userPlain);
+        return userRepository.save(user);
     }
 
     @Override

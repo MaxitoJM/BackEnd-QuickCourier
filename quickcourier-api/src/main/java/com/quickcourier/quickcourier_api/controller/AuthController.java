@@ -1,5 +1,7 @@
 package com.quickcourier.quickcourier_api.controller;
 
+import com.quickcourier.quickcourier_api.domain.dto.LoginRequest;
+import com.quickcourier.quickcourier_api.domain.dto.RegisterRequest;
 import com.quickcourier.quickcourier_api.domain.model.User;
 import com.quickcourier.quickcourier_api.security.JwtTokenUtil;
 import com.quickcourier.quickcourier_api.service.UserService;
@@ -25,18 +27,22 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping("/register")
-    public User register(@RequestBody User user) {
+    public User register(@RequestBody RegisterRequest request) {
         try {
-            return userService.register(user);
+            return userService.register(request);
         } catch (IllegalArgumentException ex) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage());
         }
     }
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String password = body.get("password");
+    public Map<String, String> login(@RequestBody LoginRequest request) {
+        String email = request.getEmail();
+        String password = request.getPassword();
+
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El email y la contraseña son obligatorios");
+        }
 
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
