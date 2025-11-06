@@ -21,9 +21,13 @@ public class UserServiceImpl implements UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /**
+     * Registra un nuevo usuario validando duplicados y encriptando la contraseña.
+     */
     @Transactional
     @Override
     public User register(User userPlain) {
+        // Validaciones básicas
         if (userPlain.getEmail() == null || userPlain.getEmail().isBlank()) {
             throw new IllegalArgumentException("El email es obligatorio");
         }
@@ -31,23 +35,27 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
-        // Verificar si ya existe
+        // Verificar duplicado
         if (userRepository.findByEmail(userPlain.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Ya existe un usuario con ese email");
         }
 
-        // Encriptar la contraseña
-        String hashed = passwordEncoder.encode(userPlain.getPasswordHash());
-        userPlain.setPasswordHash(hashed);
+        // Encriptar contraseña
+        String hashedPassword = passwordEncoder.encode(userPlain.getPasswordHash());
+        userPlain.setPasswordHash(hashedPassword);
 
-        // Rol por defecto
+        // Asignar rol por defecto si no se especifica
         if (userPlain.getRole() == null || userPlain.getRole().isBlank()) {
             userPlain.setRole("USER");
         }
 
+        // Guardar y retornar el usuario creado
         return userRepository.save(userPlain);
     }
 
+    /**
+     * Busca un usuario por su email.
+     */
     @Override
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);

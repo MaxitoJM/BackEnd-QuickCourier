@@ -4,6 +4,7 @@ spring:
     username: postgres
     password: Maxinene1
     driver-class-name: org.postgresql.Driver
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -11,6 +12,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
   flyway:
     enabled: false
 
@@ -25,6 +27,6 @@ logging:
 
 security:
   jwt:
-    secret: "cambia-esta-clave-muy-larga-y-segura-al-menos-32bytes........"
-    expiration: 86400000 # 24h en ms
-
+    # 🔑 Debe tener mínimo 32 bytes (usa una cadena larga y aleatoria)
+    secret: "clave-super-segura-y-larga-para-quickcourier-1234567890"
+    expiration: 86400000   # 24 horas (en milisegundos)
