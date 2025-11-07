@@ -1,46 +1,42 @@
 package com.quickcourier.quickcourier_api.service;
 
-import com.quickcourier.quickcourier_api.domain.model.TaxPolicy;
 import com.quickcourier.quickcourier_api.domain.model.Quote;
+import com.quickcourier.quickcourier_api.domain.model.ShippingRule;
 import com.quickcourier.quickcourier_api.domain.model.Zone;
 import com.quickcourier.quickcourier_api.domain.dto.QuoteResponse;
 import com.quickcourier.quickcourier_api.repository.QuoteRepository;
+import com.quickcourier.quickcourier_api.repository.ShippingRuleRepository;
 import com.quickcourier.quickcourier_api.repository.ZoneRepository;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
 public class QuoteService {
-    
-    private final TaxPolicy taxPolicy;
+
     private final QuoteRepository quoteRepository;
     private final ZoneRepository zoneRepository;
+    private final ShippingRuleRepository shippingRuleRepository;
 
-    public QuoteService(@Qualifier("ivaTaxPolicy") TaxPolicy taxPolicy,
-                        QuoteRepository quoteRepository,
-                        ZoneRepository zoneRepository) {
-        this.taxPolicy = taxPolicy;
+    public QuoteService(QuoteRepository quoteRepository,
+                        ZoneRepository zoneRepository,
+                        ShippingRuleRepository shippingRuleRepository) {
         this.quoteRepository = quoteRepository;
         this.zoneRepository = zoneRepository;
+        this.shippingRuleRepository = shippingRuleRepository;
     }
 
-    public QuoteResponse calculateQuote(double basePrice, double distanceKm, 
-                                        boolean weekend, boolean insurance, Long zoneId) {
-        // Buscar la zona y lanzar excepción si no existe
+    // Lógica principal de cotización
+    public QuoteResponse calculateQuote(double basePrice, double distanceKm, boolean weekend, boolean insurance, Long zoneId) {
         Zone zone = zoneRepository.findById(zoneId)
-            .orElseThrow(() -> new RuntimeException("Zona no encontrada"));
+                .orElseThrow(() -> new RuntimeException("Zona no encontrada con ID: " + zoneId));
 
-        // Calcular los diferentes componentes del precio
-        double distanceFee = distanceKm * 200 * zone.getMultiplier();
-        double weekendFee = weekend ? basePrice * 0.15 : 0;
-        double insuranceFee = insurance ? 5000 : 0;
+        // Si implementaste Opción B del repositorio, cambia esta línea por findTopByZoneIdOrderByIdDesc(zoneId)
+        ShippingRule rule = shippingRuleRepository.findByZone(zone)
+                .orElseThrow(() -> new RuntimeException("No existe una regla para esta zona."));
 
-        // Calcular subtotal, impuestos y total
-        double subtotal = basePrice + distanceFee + weekendFee + insuranceFee;
-        double tax = taxPolicy.calculateTax(subtotal);
-        double total = subtotal + tax;
+        double total = basePrice + (distanceKm * rule.getCostPerKm() * zone.getMultiplier());
+        if (weekend) total *= 1.1;
+        if (insurance) total *= 1.05;
 
-        // Crear y guardar la entidad Quote
         Quote quote = new Quote();
         quote.setBasePrice(basePrice);
         quote.setDistanceKm(distanceKm);
@@ -50,16 +46,8 @@ public class QuoteService {
         quote.setZone(zone);
         quoteRepository.save(quote);
 
-        // Retornar el DTO con toda la información del cálculo
-        return new QuoteResponse(
-            basePrice, 
-            distanceKm, 
-            weekend, 
-            insurance, 
-            zone.getName(), 
-            subtotal, 
-            tax, 
-            total
-        );
+        // Opción A: usando constructor agregado en QuoteResponse
+        return new QuoteResponse(zone.getName(), distanceKm, weekend, insurance, total);
+
     }
 }
